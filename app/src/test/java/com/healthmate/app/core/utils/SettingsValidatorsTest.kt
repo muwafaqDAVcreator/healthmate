@@ -26,6 +26,8 @@ class SettingsValidatorsTest {
         assertEquals("Steps goal should be between 1,000 and 100,000", SettingsValidators.stepsGoal("200"))
         assertEquals("Water goal should be between 500 and 10,000", SettingsValidators.waterGoal("20000"))
         assertNull(SettingsValidators.caloriesGoal("500"))
+        assertEquals("Food goal should be between 1,000 and 5,000", SettingsValidators.foodGoal("300"))
+        assertNull(SettingsValidators.foodGoal("2000"))
     }
 
     @Test

@@ -7,6 +7,9 @@ import com.healthmate.app.features.dashboard.DashboardViewModel
 import com.healthmate.app.features.records.DateRange
 import com.healthmate.app.features.records.RecordFilter
 import com.healthmate.app.features.records.RecordsViewModel
+import com.healthmate.app.features.food.data.FoodEntry
+import com.healthmate.app.features.food.data.Meal
+import com.healthmate.app.features.food.data.SqliteFoodRepository
 import com.healthmate.app.features.records.data.SqliteHealthRecordRepository
 import com.healthmate.app.features.records.form.FormResult
 import com.healthmate.app.features.records.form.RecordFormViewModel
@@ -43,11 +46,13 @@ class ViewModelsTest {
 
     private lateinit var dbHelper: HealthDatabaseHelper
     private lateinit var repository: SqliteHealthRecordRepository
+    private lateinit var foodRepository: SqliteFoodRepository
 
     @Before
     fun setUp() {
         dbHelper = createTestDatabase()
         repository = createTestRepository(dbHelper, mainDispatcherRule.dispatcher)
+        foodRepository = SqliteFoodRepository(dbHelper, mainDispatcherRule.dispatcher)
     }
 
     @After
@@ -117,11 +122,11 @@ class ViewModelsTest {
         repository.addRecord(record(daysAgo(1), steps = 8000, calories = 400, water = 2000))
         // Gap 2 days ago, so the streak should stop at 2.
         repository.addRecord(record(daysAgo(3), steps = 9000, calories = 450, water = 2200))
-        val vm = DashboardViewModel(repository, FakeSettingsRepository(), clock = { today })
+        val vm = DashboardViewModel(repository, foodRepository, FakeSettingsRepository(), clock = { today })
         advanceUntilIdle()
 
         val state = vm.uiState.value
-        assertEquals(5000, state.today.steps)
+        assertEquals(5000, state.day.steps)
         assertEquals(7, state.lastSevenDays.size)
         assertEquals(today, state.lastSevenDays.last().date)
         assertEquals(2, state.streak)
@@ -132,7 +137,7 @@ class ViewModelsTest {
     @Test
     fun `progress never goes above 100 percent`() = runTest {
         repository.addRecord(record(daysAgo(0), steps = 25000))
-        val vm = DashboardViewModel(repository, FakeSettingsRepository(), clock = { today })
+        val vm = DashboardViewModel(repository, foodRepository, FakeSettingsRepository(), clock = { today })
         advanceUntilIdle()
 
         assertEquals(1f, vm.uiState.value.progressFor(HealthMetric.STEPS))
@@ -140,21 +145,21 @@ class ViewModelsTest {
 
     @Test
     fun `dashboard updates by itself after a record is added`() = runTest {
-        val vm = DashboardViewModel(repository, FakeSettingsRepository(), clock = { today })
+        val vm = DashboardViewModel(repository, foodRepository, FakeSettingsRepository(), clock = { today })
         advanceUntilIdle()
-        assertEquals(0, vm.uiState.value.today.water)
+        assertEquals(0, vm.uiState.value.day.water)
 
         repository.addRecord(record(daysAgo(0), water = 750))
         advanceUntilIdle()
 
-        assertEquals(750, vm.uiState.value.today.water)
+        assertEquals(750, vm.uiState.value.day.water)
     }
 
     @Test
     fun `dashboard progress uses the goals from Settings`() = runTest {
         repository.addRecord(record(daysAgo(0), steps = 3000, water = 1000))
         val settings = FakeSettingsRepository(UserSettings(name = "Alex", goals = Goals(steps = 6000, water = 1000)))
-        val vm = DashboardViewModel(repository, settings, clock = { today })
+        val vm = DashboardViewModel(repository, foodRepository, settings, clock = { today })
         advanceUntilIdle()
 
         assertEquals("Alex", vm.uiState.value.name)
@@ -164,6 +169,34 @@ class ViewModelsTest {
         settings.save(UserSettings(goals = Goals(steps = 3000)))
         advanceUntilIdle()
         assertEquals(1f, vm.uiState.value.progressFor(HealthMetric.STEPS))
+    }
+
+    @Test
+    fun `tapping another day in the week strip shows that day's totals`() = runTest {
+        repository.addRecord(record(daysAgo(0), steps = 1000))
+        repository.addRecord(record(daysAgo(2), steps = 6000, calories = 300))
+        foodRepository.addEntry(FoodEntry(date = daysAgo(2), meal = Meal.LUNCH, name = "Rice", servings = 1.0, calories = 900))
+        val vm = DashboardViewModel(repository, foodRepository, FakeSettingsRepository(), clock = { today })
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.isToday)
+
+        vm.selectDate(daysAgo(2))
+        advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertEquals(6000, state.day.steps)
+        assertEquals(900, state.caloriesEaten)
+        assertEquals(600, state.netCalories) // 900 eaten - 300 burned
+        assertTrue(!state.isToday)
+    }
+
+    @Test
+    fun `future days cannot be selected`() = runTest {
+        val vm = DashboardViewModel(repository, foodRepository, FakeSettingsRepository(), clock = { today })
+
+        vm.selectDate(today.plusDays(1))
+
+        assertEquals(today, vm.uiState.value.selectedDate)
     }
 
     // ---------- RecordFormViewModel ----------
