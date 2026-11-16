@@ -2,11 +2,15 @@ package com.healthmate.app.helpers
 
 import androidx.test.core.app.ApplicationProvider
 import com.healthmate.app.core.database.HealthDatabaseHelper
+import com.healthmate.app.core.settings.SettingsRepository
+import com.healthmate.app.core.settings.UserSettings
 import com.healthmate.app.features.records.data.HealthRecord
 import com.healthmate.app.features.records.data.SqliteHealthRecordRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -29,6 +33,15 @@ fun createTestRepository(
 
 fun record(date: LocalDate, steps: Int = 1000, calories: Int = 100, water: Int = 500) =
     HealthRecord(date = date, steps = steps, calories = calories, water = water)
+
+/** Keeps settings in memory so tests don't touch real preferences. */
+class FakeSettingsRepository(initial: UserSettings = UserSettings()) : SettingsRepository {
+    private val state = MutableStateFlow(initial)
+    override val settings: StateFlow<UserSettings> = state
+    override suspend fun save(settings: UserSettings) {
+        state.value = settings
+    }
+}
 
 /** Runs view model coroutines on a test dispatcher instead of the Android main thread. */
 @OptIn(ExperimentalCoroutinesApi::class)

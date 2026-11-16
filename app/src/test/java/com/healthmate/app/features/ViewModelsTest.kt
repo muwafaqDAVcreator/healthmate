@@ -10,10 +10,14 @@ import com.healthmate.app.features.records.RecordsViewModel
 import com.healthmate.app.features.records.data.SqliteHealthRecordRepository
 import com.healthmate.app.features.records.form.FormResult
 import com.healthmate.app.features.records.form.RecordFormViewModel
+import com.healthmate.app.core.settings.Goals
+import com.healthmate.app.core.settings.UserSettings
+import com.healthmate.app.helpers.FakeSettingsRepository
 import com.healthmate.app.helpers.MainDispatcherRule
 import com.healthmate.app.helpers.createTestDatabase
 import com.healthmate.app.helpers.createTestRepository
 import com.healthmate.app.helpers.record
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -27,6 +31,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class ViewModelsTest {
 
@@ -48,8 +53,12 @@ class ViewModelsTest {
     @After
     fun tearDown() = dbHelper.close()
 
-    private fun formViewModel(recordId: Long? = null) = RecordFormViewModel(
+    private fun formViewModel(
+        recordId: Long? = null,
+        settings: UserSettings = UserSettings(),
+    ) = RecordFormViewModel(
         repository = repository,
+        settingsRepository = FakeSettingsRepository(settings),
         savedStateHandle = SavedStateHandle(
             recordId?.let { mapOf(RecordFormViewModel.ARG_RECORD_ID to it) } ?: emptyMap(),
         ),
@@ -108,7 +117,7 @@ class ViewModelsTest {
         repository.addRecord(record(daysAgo(1), steps = 8000, calories = 400, water = 2000))
         // Gap 2 days ago, so the streak should stop at 2.
         repository.addRecord(record(daysAgo(3), steps = 9000, calories = 450, water = 2200))
-        val vm = DashboardViewModel(repository, clock = { today })
+        val vm = DashboardViewModel(repository, FakeSettingsRepository(), clock = { today })
         advanceUntilIdle()
 
         val state = vm.uiState.value
@@ -123,7 +132,7 @@ class ViewModelsTest {
     @Test
     fun `progress never goes above 100 percent`() = runTest {
         repository.addRecord(record(daysAgo(0), steps = 25000))
-        val vm = DashboardViewModel(repository, clock = { today })
+        val vm = DashboardViewModel(repository, FakeSettingsRepository(), clock = { today })
         advanceUntilIdle()
 
         assertEquals(1f, vm.uiState.value.progressFor(HealthMetric.STEPS))
@@ -131,7 +140,7 @@ class ViewModelsTest {
 
     @Test
     fun `dashboard updates by itself after a record is added`() = runTest {
-        val vm = DashboardViewModel(repository, clock = { today })
+        val vm = DashboardViewModel(repository, FakeSettingsRepository(), clock = { today })
         advanceUntilIdle()
         assertEquals(0, vm.uiState.value.today.water)
 
@@ -139,6 +148,22 @@ class ViewModelsTest {
         advanceUntilIdle()
 
         assertEquals(750, vm.uiState.value.today.water)
+    }
+
+    @Test
+    fun `dashboard progress uses the goals from Settings`() = runTest {
+        repository.addRecord(record(daysAgo(0), steps = 3000, water = 1000))
+        val settings = FakeSettingsRepository(UserSettings(name = "Alex", goals = Goals(steps = 6000, water = 1000)))
+        val vm = DashboardViewModel(repository, settings, clock = { today })
+        advanceUntilIdle()
+
+        assertEquals("Alex", vm.uiState.value.name)
+        assertEquals(0.5f, vm.uiState.value.progressFor(HealthMetric.STEPS)) // 3000 of 6000
+        assertEquals(1, vm.uiState.value.goalsReached) // water 1000 of 1000
+
+        settings.save(UserSettings(goals = Goals(steps = 3000)))
+        advanceUntilIdle()
+        assertEquals(1f, vm.uiState.value.progressFor(HealthMetric.STEPS))
     }
 
     // ---------- RecordFormViewModel ----------
@@ -177,6 +202,38 @@ class ViewModelsTest {
 
         assertEquals("123", vm.uiState.value.steps)
         assertEquals("500", vm.uiState.value.water)
+    }
+
+    @Test
+    fun `TC-C1 calculate fills calories from steps, height and weight`() = runTest {
+        val vm = formViewModel(settings = UserSettings(heightCm = 175, weightKg = 70))
+        vm.onStepsChange("7850")
+
+        vm.calculateCalories()
+
+        // stride 0.7245 m -> 5.69 km -> 70 x 5.69 x 0.5 = 199 kcal
+        assertEquals("199", vm.uiState.value.calories)
+        assertTrue(vm.uiState.value.canCalculateCalories)
+    }
+
+    @Test
+    fun `TC-C2 calculate without height and weight asks for Settings`() = runTest {
+        val vm = formViewModel()
+        vm.onStepsChange("5000")
+
+        vm.calculateCalories()
+
+        assertEquals("", vm.uiState.value.calories)
+        assertEquals("Add your height and weight in Settings first", vm.uiState.value.formError)
+    }
+
+    @Test
+    fun `TC-C3 calculate with no steps asks for steps first`() = runTest {
+        val vm = formViewModel(settings = UserSettings(heightCm = 175, weightKg = 70))
+
+        vm.calculateCalories()
+
+        assertEquals("Enter your steps first to calculate calories", vm.uiState.value.stepsError)
     }
 
     @Test

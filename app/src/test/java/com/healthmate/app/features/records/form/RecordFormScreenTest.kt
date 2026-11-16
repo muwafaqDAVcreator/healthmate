@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import com.healthmate.app.core.database.HealthDatabaseHelper
 import com.healthmate.app.core.theme.HealthMateTheme
+import com.healthmate.app.helpers.FakeSettingsRepository
 import com.healthmate.app.helpers.createTestDatabase
 import com.healthmate.app.helpers.createTestRepository
 import org.junit.After
@@ -31,7 +32,7 @@ class RecordFormScreenTest {
     @Before
     fun setUp() {
         dbHelper = createTestDatabase()
-        val viewModel = RecordFormViewModel(createTestRepository(dbHelper), SavedStateHandle())
+        val viewModel = RecordFormViewModel(createTestRepository(dbHelper), FakeSettingsRepository(), SavedStateHandle())
         composeRule.setContent {
             HealthMateTheme {
                 RecordFormScreen(onBack = {}, onFinished = {}, viewModel = viewModel)
