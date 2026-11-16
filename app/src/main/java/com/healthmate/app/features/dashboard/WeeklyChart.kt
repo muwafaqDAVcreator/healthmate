@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -33,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.healthmate.app.core.constants.HealthMetric
+import com.healthmate.app.core.ui.AppCard
 import com.healthmate.app.core.utils.AppDates
 import com.healthmate.app.core.utils.compact
 import com.healthmate.app.core.utils.formatted
@@ -51,7 +51,7 @@ fun WeeklyChart(
     onMetricSelected: (HealthMetric) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier.fillMaxWidth()) {
+    AppCard(modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text("Last 7 days", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(12.dp))

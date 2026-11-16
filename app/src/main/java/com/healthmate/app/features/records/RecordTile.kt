@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.healthmate.app.core.constants.HealthMetric
+import com.healthmate.app.core.ui.AppCard
 import com.healthmate.app.core.utils.AppDates
 import com.healthmate.app.core.utils.formatted
 import com.healthmate.app.features.records.data.HealthRecord
@@ -34,7 +34,7 @@ import com.healthmate.app.features.records.data.HealthRecord
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RecordTile(record: HealthRecord, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+    AppCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
         Row(
             modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,

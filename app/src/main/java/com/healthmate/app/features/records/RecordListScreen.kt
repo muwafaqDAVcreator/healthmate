@@ -16,10 +16,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.EventBusy
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -206,7 +206,7 @@ private fun DeleteBackground() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .clip(CardDefaults.shape)
+            .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.errorContainer)
             .padding(horizontal = 20.dp),
         contentAlignment = Alignment.CenterEnd,

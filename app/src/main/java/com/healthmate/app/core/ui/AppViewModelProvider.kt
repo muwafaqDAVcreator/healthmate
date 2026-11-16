@@ -7,6 +7,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.healthmate.app.HealthMateApplication
 import com.healthmate.app.features.dashboard.DashboardViewModel
+import com.healthmate.app.features.food.FoodLogViewModel
+import com.healthmate.app.features.food.add.AddFoodViewModel
 import com.healthmate.app.features.records.RecordsViewModel
 import com.healthmate.app.features.records.form.RecordFormViewModel
 import com.healthmate.app.features.settings.SettingsViewModel
@@ -19,7 +21,7 @@ object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
             val app = healthMateApplication()
-            DashboardViewModel(app.repository, app.settingsRepository)
+            DashboardViewModel(app.repository, app.foodRepository, app.settingsRepository)
         }
         initializer { RecordsViewModel(healthMateApplication().repository) }
         initializer {
@@ -30,6 +32,11 @@ object AppViewModelProvider {
                 savedStateHandle = createSavedStateHandle(),
             )
         }
+        initializer {
+            val app = healthMateApplication()
+            FoodLogViewModel(app.foodRepository, app.settingsRepository)
+        }
+        initializer { AddFoodViewModel(healthMateApplication().foodRepository, createSavedStateHandle()) }
         initializer { SettingsViewModel(healthMateApplication().settingsRepository) }
     }
 }
