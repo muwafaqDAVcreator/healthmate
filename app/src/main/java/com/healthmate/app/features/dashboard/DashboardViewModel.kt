@@ -4,8 +4,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.healthmate.app.core.constants.HealthMetric
+import com.healthmate.app.core.settings.Goals
+import com.healthmate.app.core.settings.SettingsRepository
 import com.healthmate.app.features.records.data.DailyTotal
 import com.healthmate.app.features.records.data.HealthRecordRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +24,8 @@ data class DashboardUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val chartMetric: HealthMetric = HealthMetric.STEPS,
+    val name: String = "",
+    val goals: Goals = Goals(),
 ) {
     /** Average of the chart's metric over the last 7 days. */
     val weeklyAverage: Double
@@ -31,13 +36,18 @@ data class DashboardUiState(
     val streak: Int
         get() = lastSevenDays.asReversed().takeWhile { it.hasData }.size
 
+    /** How many of the three daily goals are already met today. */
+    val goalsReached: Int
+        get() = HealthMetric.entries.count { progressFor(it) >= 1f }
+
     /** Fraction of today's goal reached, capped at 1 for the progress bar. */
     fun progressFor(metric: HealthMetric): Float =
-        (metric.valueIn(today).toFloat() / metric.dailyGoal).coerceIn(0f, 1f)
+        (metric.valueIn(today).toFloat() / metric.goalIn(goals)).coerceIn(0f, 1f)
 }
 
 class DashboardViewModel(
     private val repository: HealthRecordRepository,
+    private val settingsRepository: SettingsRepository,
     private val clock: () -> LocalDate = { LocalDate.now() },
 ) : ViewModel() {
 
@@ -50,6 +60,12 @@ class DashboardViewModel(
         // Reload whenever a record is added, edited or deleted anywhere in the app.
         viewModelScope.launch {
             repository.changes.collect { load() }
+        }
+        // Use the latest name and goals from the Settings screen.
+        viewModelScope.launch {
+            settingsRepository.settings.collect { settings ->
+                _uiState.update { it.copy(name = settings.name, goals = settings.goals) }
+            }
         }
     }
 
@@ -81,7 +97,7 @@ class DashboardViewModel(
                     )
                 }
             } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
+                if (e is CancellationException) throw e
                 Log.e(TAG, "Dashboard load failed", e)
                 _uiState.update {
                     it.copy(isLoading = false, errorMessage = "Could not load your summary. Please try again.")

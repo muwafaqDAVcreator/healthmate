@@ -6,6 +6,7 @@ import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.healthmate.app.core.settings.Goals
 import com.healthmate.app.features.records.data.DailyTotal
 import com.healthmate.app.features.records.data.HealthRecord
 
@@ -20,7 +21,6 @@ enum class HealthMetric(
     val unit: String,
     val icon: ImageVector,
     val color: Color,
-    val dailyGoal: Int,
 ) {
     STEPS(
         label = "Steps",
@@ -28,7 +28,6 @@ enum class HealthMetric(
         unit = "steps",
         icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
         color = Color(0xFF43A047),
-        dailyGoal = DailyGoals.STEPS,
     ),
     CALORIES(
         label = "Calories burned",
@@ -36,7 +35,6 @@ enum class HealthMetric(
         unit = "kcal",
         icon = Icons.Rounded.LocalFireDepartment,
         color = Color(0xFFE53935),
-        dailyGoal = DailyGoals.CALORIES,
     ),
     WATER(
         label = "Water intake",
@@ -44,8 +42,14 @@ enum class HealthMetric(
         unit = "ml",
         icon = Icons.Rounded.WaterDrop,
         color = Color(0xFF1E88E5),
-        dailyGoal = DailyGoals.WATER,
     );
+
+    /** The user's goal for this metric (set on the Settings screen). */
+    fun goalIn(goals: Goals): Int = when (this) {
+        STEPS -> goals.steps
+        CALORIES -> goals.calories
+        WATER -> goals.water
+    }
 
     fun valueIn(total: DailyTotal): Int = when (this) {
         STEPS -> total.steps

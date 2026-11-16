@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ListAlt
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -32,11 +33,13 @@ import com.healthmate.app.features.dashboard.DashboardScreen
 import com.healthmate.app.features.records.RecordListScreen
 import com.healthmate.app.features.records.form.RecordFormScreen
 import com.healthmate.app.features.records.form.RecordFormViewModel
+import com.healthmate.app.features.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
 private object Routes {
     const val DASHBOARD = "dashboard"
     const val RECORDS = "records"
+    const val SETTINGS = "settings"
     const val FORM = "form?${RecordFormViewModel.ARG_RECORD_ID}={${RecordFormViewModel.ARG_RECORD_ID}}"
 
     fun form(recordId: Long? = null) =
@@ -46,6 +49,7 @@ private object Routes {
 private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
     DASHBOARD(Routes.DASHBOARD, "Dashboard", Icons.Rounded.Dashboard),
     RECORDS(Routes.RECORDS, "Records", Icons.AutoMirrored.Rounded.ListAlt),
+    SETTINGS(Routes.SETTINGS, "Settings", Icons.Rounded.Settings),
 }
 
 /** App shell: bottom navigation, the Add button, snackbars and the screens. */
@@ -57,6 +61,7 @@ fun HealthMateApp() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val onTopLevelScreen = Tab.entries.any { it.route == currentRoute }
+    val showAddButton = currentRoute == Routes.DASHBOARD || currentRoute == Routes.RECORDS
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -81,7 +86,7 @@ fun HealthMateApp() {
             }
         },
         floatingActionButton = {
-            if (onTopLevelScreen) {
+            if (showAddButton) {
                 ExtendedFloatingActionButton(
                     onClick = { navController.navigate(Routes.form()) },
                     icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
@@ -107,6 +112,9 @@ fun HealthMateApp() {
                     snackbarHostState = snackbarHostState,
                     onRecordClick = { record -> navController.navigate(Routes.form(record.id)) },
                 )
+            }
+            composable(Routes.SETTINGS) {
+                SettingsScreen(snackbarHostState = snackbarHostState)
             }
             composable(
                 route = Routes.FORM,
