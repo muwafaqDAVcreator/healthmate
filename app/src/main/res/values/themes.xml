@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Only used for the window before Compose draws; the real theme is in Theme.kt -->
+    <style name="Theme.HealthMate" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+
+    <color name="window_background">#FFF4FBF8</color>
+    <color name="ic_launcher_background">#FF00897B</color>
+</resources>
