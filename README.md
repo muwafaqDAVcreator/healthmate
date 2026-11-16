@@ -12,6 +12,9 @@ in a local **SQLite** database.
 - **Delete** – from the edit screen (with confirmation) or by swiping left (with Undo)
 - **Weekly chart** – last 7 days for any metric, with the daily goal line
 - **Streak badge** – how many days in a row you have logged something
+- **Settings** – your name, height, weight (with BMI) and your own daily goals
+- **Calories from steps** – one tap on the form estimates calories burned from
+  your steps, height and weight (formula below)
 - Light and dark theme that follows the phone setting
 - Dummy records are added on first launch for testing
 
@@ -25,16 +28,18 @@ app/src/main/java/com/healthmate/app/
 ├── core/
 │   ├── constants/               # daily goals, input limits, metric colours/icons
 │   ├── database/                # HealthDatabaseHelper – SQLiteOpenHelper, table, dummy data
+│   ├── settings/                # UserSettings, Goals, SettingsRepository (SharedPreferences)
 │   ├── theme/                   # Material 3 light/dark theme
 │   ├── ui/                      # view model factory, error banner, date rules
-│   └── utils/                   # date and number formatting, form validators
+│   └── utils/                   # formatting, validators, CalorieCalculator
 └── features/
     ├── records/
     │   ├── data/                # HealthRecord, DailyTotal, repository (all SQL / CRUD)
     │   ├── form/                # RecordFormViewModel + add/edit screen
     │   ├── RecordsViewModel.kt  # list state, filters, delete/undo
     │   └── RecordListScreen.kt
-    └── dashboard/               # DashboardViewModel, screen, SummaryCard, WeeklyChart
+    ├── dashboard/               # DashboardViewModel, screen, SummaryCard, WeeklyChart
+    └── settings/                # SettingsViewModel + profile/goals screen
 ```
 
 Data flows one way: **Screen → ViewModel → Repository → SQLiteOpenHelper → SQLite**.
@@ -58,6 +63,21 @@ Table `health_records`
 | calories | INTEGER | kcal burned                    |
 | water    | INTEGER | ml drunk                       |
 
+Settings (name, height, weight, goals) are small key-value data, so they are
+kept in **SharedPreferences**, separate from the health records in SQLite.
+The `health_records` table is unchanged.
+
+## Calories from steps
+
+| Step | Formula |
+|------|---------|
+| 1. Stride length | height (cm) × 0.414 ÷ 100 = metres |
+| 2. Distance | steps × stride length ÷ 1000 = km |
+| 3. Calories | weight (kg) × distance (km) × 0.5 = kcal |
+
+Example: 175 cm, 70 kg, 7,850 steps → stride 0.72 m → 5.7 km → **199 kcal**.
+It is an estimate; the user can still type their own value.
+
 ## Libraries
 
 | Library                         | Why                                               |
@@ -78,6 +98,6 @@ Open the folder in Android Studio and press Run, or from a terminal:
 
 ```bash
 ./gradlew installDebug        # install on a running emulator or phone
-./gradlew testDebugUnitTest   # 35 unit, database and UI tests
+./gradlew testDebugUnitTest   # 52 unit, database and UI tests
 ./gradlew assembleRelease     # APK in app/build/outputs/apk/release/
 ```
