@@ -5,6 +5,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.healthmate.app.core.constants.InputLimits
+import com.healthmate.app.core.settings.SettingsRepository
+import com.healthmate.app.core.utils.CalorieCalculator
 import com.healthmate.app.core.utils.RecordValidators
 import com.healthmate.app.features.records.data.HealthRecord
 import com.healthmate.app.features.records.data.HealthRecordRepository
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.util.Locale
 
 /** What happened when the form closed, so the app can show the right message. */
 enum class FormResult(val message: String) {
@@ -38,6 +41,10 @@ data class RecordFormUiState(
     val formError: String? = null,
     val isSaving: Boolean = false,
     val result: FormResult? = null,
+    /** True when height and weight are set in Settings, so calories can be calculated. */
+    val canCalculateCalories: Boolean = false,
+    /** Explains the last calculated calorie value, e.g. "≈ 5.7 km walked at 70 kg". */
+    val calorieHint: String? = null,
 )
 
 /**
@@ -46,6 +53,7 @@ data class RecordFormUiState(
  */
 class RecordFormViewModel(
     private val repository: HealthRecordRepository,
+    private val settingsRepository: SettingsRepository,
     savedStateHandle: SavedStateHandle,
     private val clock: () -> LocalDate = { LocalDate.now() },
 ) : ViewModel() {
@@ -53,7 +61,12 @@ class RecordFormViewModel(
     private val recordId: Long = savedStateHandle.get<Long>(ARG_RECORD_ID) ?: NO_ID
 
     private val _uiState = MutableStateFlow(
-        RecordFormUiState(isEditMode = recordId != NO_ID, isLoading = recordId != NO_ID, date = clock()),
+        RecordFormUiState(
+            isEditMode = recordId != NO_ID,
+            isLoading = recordId != NO_ID,
+            date = clock(),
+            canCalculateCalories = settingsRepository.settings.value.hasBodyMeasurements,
+        ),
     )
     val uiState: StateFlow<RecordFormUiState> = _uiState.asStateFlow()
 
@@ -86,9 +99,36 @@ class RecordFormViewModel(
     fun onDateChange(date: LocalDate) = edit { it.copy(date = date) }
 
     // Only digits are kept, so letters, signs and decimals can't be typed.
-    fun onStepsChange(input: String) = edit { it.copy(steps = digitsOnly(input)) }
-    fun onCaloriesChange(input: String) = edit { it.copy(calories = digitsOnly(input)) }
+    fun onStepsChange(input: String) = edit { it.copy(steps = digitsOnly(input), calorieHint = null) }
+    fun onCaloriesChange(input: String) = edit { it.copy(calories = digitsOnly(input), calorieHint = null) }
     fun onWaterChange(input: String) = edit { it.copy(water = digitsOnly(input)) }
+
+    /**
+     * Fills the calories field from the steps typed in, using the height and
+     * weight saved in Settings (see [CalorieCalculator] for the formula).
+     */
+    fun calculateCalories() {
+        val settings = settingsRepository.settings.value
+        val height = settings.heightCm
+        val weight = settings.weightKg
+        if (height == null || weight == null) {
+            _uiState.update { it.copy(formError = "Add your height and weight in Settings first") }
+            return
+        }
+        val steps = _uiState.value.steps.toIntOrNull()
+        if (steps == null || steps == 0) {
+            _uiState.update { it.copy(stepsError = "Enter your steps first to calculate calories") }
+            return
+        }
+        val kcal = CalorieCalculator.caloriesFromSteps(steps, height, weight)
+        val km = CalorieCalculator.distanceKm(steps, height)
+        edit {
+            it.copy(
+                calories = kcal.toString(),
+                calorieHint = "Estimated: ${String.format(Locale.UK, "%.1f", km)} km walked at $weight kg",
+            )
+        }
+    }
 
     fun save() {
         showErrors = true

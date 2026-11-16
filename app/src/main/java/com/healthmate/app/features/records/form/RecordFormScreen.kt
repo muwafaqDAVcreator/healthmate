@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Calculate
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.AlertDialog
@@ -25,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -122,12 +125,19 @@ fun RecordFormScreen(
                 error = state.stepsError,
                 onValueChange = viewModel::onStepsChange,
             )
-            NumberField(
-                metric = HealthMetric.CALORIES,
-                value = state.calories,
-                error = state.caloriesError,
-                onValueChange = viewModel::onCaloriesChange,
-            )
+            Column {
+                NumberField(
+                    metric = HealthMetric.CALORIES,
+                    value = state.calories,
+                    error = state.caloriesError,
+                    helper = state.calorieHint,
+                    onValueChange = viewModel::onCaloriesChange,
+                )
+                CalculateCaloriesRow(
+                    enabled = state.canCalculateCalories,
+                    onClick = viewModel::calculateCalories,
+                )
+            }
             NumberField(
                 metric = HealthMetric.WATER,
                 value = state.water,
@@ -217,6 +227,7 @@ private fun NumberField(
     error: String?,
     onValueChange: (String) -> Unit,
     imeAction: ImeAction = ImeAction.Next,
+    helper: String? = null,
 ) {
     OutlinedTextField(
         value = value,
@@ -225,13 +236,38 @@ private fun NumberField(
         leadingIcon = { Icon(metric.icon, contentDescription = null, tint = metric.color) },
         suffix = { Text(metric.unit) },
         isError = error != null,
-        supportingText = error?.let { { Text(it) } },
+        supportingText = (error ?: helper)?.let { { Text(it) } },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = imeAction),
         modifier = Modifier
             .fillMaxWidth()
             .testTag("field_${metric.name.lowercase()}"),
     )
+}
+
+/**
+ * "Calculate from steps" button under the calories field. When height and
+ * weight are missing it explains where to add them instead.
+ */
+@Composable
+private fun CalculateCaloriesRow(enabled: Boolean, onClick: () -> Unit) {
+    if (enabled) {
+        FilledTonalButton(
+            onClick = onClick,
+            modifier = Modifier.testTag("calculate_calories"),
+        ) {
+            Icon(Icons.Rounded.Calculate, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Calculate from steps")
+        }
+    } else {
+        Text(
+            "Tip: add your height and weight in Settings to calculate calories from steps.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
