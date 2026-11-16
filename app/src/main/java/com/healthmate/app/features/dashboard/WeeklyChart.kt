@@ -45,6 +45,7 @@ import kotlin.math.roundToInt
 fun WeeklyChart(
     days: List<DailyTotal>,
     metric: HealthMetric,
+    goal: Int,
     average: Double,
     today: LocalDate,
     onMetricSelected: (HealthMetric) -> Unit,
@@ -71,6 +72,7 @@ fun WeeklyChart(
             BarChart(
                 days = days,
                 metric = metric,
+                goal = goal,
                 today = today,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -108,6 +110,7 @@ fun WeeklyChart(
 private fun BarChart(
     days: List<DailyTotal>,
     metric: HealthMetric,
+    goal: Int,
     today: LocalDate,
     modifier: Modifier = Modifier,
 ) {
@@ -116,8 +119,8 @@ private fun BarChart(
     val goalColor = MaterialTheme.colorScheme.outline
     val labelStyle = TextStyle(fontSize = 10.sp, color = labelColor)
 
-    val growth = remember(days, metric) { Animatable(0f) }
-    LaunchedEffect(days, metric) { growth.animateTo(1f, tween(durationMillis = 600)) }
+    val growth = remember(days, metric, goal) { Animatable(0f) }
+    LaunchedEffect(days, metric, goal) { growth.animateTo(1f, tween(durationMillis = 600)) }
 
     val values = days.map { metric.valueIn(it) }
     val description = days.zip(values).joinToString { (day, value) ->
@@ -131,12 +134,12 @@ private fun BarChart(
 
         val topSpace = 18.dp.toPx() // room for the value labels
         val chartHeight = size.height - topSpace
-        val maxValue = maxOf(values.maxOrNull() ?: 0, metric.dailyGoal) * 1.1f
+        val maxValue = maxOf(values.maxOrNull() ?: 0, goal) * 1.1f
         val slot = size.width / days.size
         val barWidth = slot * 0.55f
 
         // Goal line
-        val goalY = topSpace + chartHeight * (1 - metric.dailyGoal / maxValue)
+        val goalY = topSpace + chartHeight * (1 - goal / maxValue)
         drawLine(
             color = goalColor,
             start = Offset(0f, goalY),

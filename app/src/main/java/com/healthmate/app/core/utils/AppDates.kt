@@ -16,6 +16,7 @@ object AppDates {
     private val shortFormat = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.UK)
     private val dayMonthFormat = DateTimeFormatter.ofPattern("d MMM", Locale.UK)
     private val weekdayFormat = DateTimeFormatter.ofPattern("EEE", Locale.UK)
+    private val monthFormat = DateTimeFormatter.ofPattern("MMM", Locale.UK)
 
     fun toDb(date: LocalDate): String = date.format(dbFormat)
 
@@ -29,6 +30,9 @@ object AppDates {
 
     /** 16 Nov */
     fun dayMonth(date: LocalDate): String = date.format(dayMonthFormat)
+
+    /** Nov */
+    fun monthShort(date: LocalDate): String = date.format(monthFormat).uppercase(Locale.UK)
 
     /** Mon */
     fun weekday(date: LocalDate): String = date.format(weekdayFormat)

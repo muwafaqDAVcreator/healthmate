@@ -1,5 +1,6 @@
 package com.healthmate.app.features.records
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.Card
@@ -20,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.healthmate.app.core.constants.HealthMetric
@@ -36,6 +39,8 @@ fun RecordTile(record: HealthRecord, onClick: () -> Unit, modifier: Modifier = M
             modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            DateBadge(record)
+            Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     AppDates.shortDate(record.date),
@@ -58,6 +63,31 @@ fun RecordTile(record: HealthRecord, onClick: () -> Unit, modifier: Modifier = M
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/** Day number and month in a teal rounded square, like a calendar page. */
+@Composable
+private fun DateBadge(record: HealthRecord) {
+    Column(
+        modifier = Modifier
+            .size(52.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            record.date.dayOfMonth.toString(),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+        Text(
+            AppDates.monthShort(record.date),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
     }
 }
 

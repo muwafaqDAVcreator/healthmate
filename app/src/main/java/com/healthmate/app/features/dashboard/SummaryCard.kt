@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -37,15 +39,20 @@ import kotlin.math.roundToInt
 fun SummaryCard(
     metric: HealthMetric,
     value: Int,
+    goal: Int,
     progress: Float,
     modifier: Modifier = Modifier,
 ) {
     val percent = (progress * 100).roundToInt()
     val goalText = if (progress >= 1f) "Goal reached! 🎉"
-    else "$percent% of ${metric.dailyGoal.formatted()} ${metric.unit} goal"
+    else "$percent% of ${goal.formatted()} ${metric.unit} goal"
     val animatedProgress by animateFloatAsState(targetValue = progress, label = "progress")
 
     Card(
+        // A light wash of the metric colour makes each card easy to tell apart.
+        colors = CardDefaults.cardColors(
+            containerColor = metric.color.copy(alpha = 0.08f).compositeOver(MaterialTheme.colorScheme.surface),
+        ),
         modifier = modifier
             .fillMaxWidth()
             // Screen readers read the whole card as one sentence.
