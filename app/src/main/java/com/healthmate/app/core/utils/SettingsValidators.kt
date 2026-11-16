@@ -19,6 +19,7 @@ object SettingsValidators {
     fun stepsGoal(input: String): String? = requiredRange(input, 1_000, 100_000, "Steps goal")
     fun caloriesGoal(input: String): String? = requiredRange(input, 50, 5_000, "Calories goal")
     fun waterGoal(input: String): String? = requiredRange(input, 500, 10_000, "Water goal")
+    fun foodGoal(input: String): String? = requiredRange(input, 1_000, 5_000, "Food goal")
 
     private fun optionalRange(input: String, min: Int, max: Int, label: String, unit: String): String? {
         val text = input.trim()

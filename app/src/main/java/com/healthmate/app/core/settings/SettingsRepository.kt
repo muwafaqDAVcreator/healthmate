@@ -40,6 +40,7 @@ class SharedPrefsSettingsRepository(
                 putInt(KEY_GOAL_STEPS, settings.goals.steps)
                 putInt(KEY_GOAL_CALORIES, settings.goals.calories)
                 putInt(KEY_GOAL_WATER, settings.goals.water)
+                putInt(KEY_GOAL_FOOD, settings.goals.foodIntake)
             }
         }
         _settings.value = settings
@@ -55,6 +56,7 @@ class SharedPrefsSettingsRepository(
                 steps = prefs.getInt(KEY_GOAL_STEPS, defaults.steps),
                 calories = prefs.getInt(KEY_GOAL_CALORIES, defaults.calories),
                 water = prefs.getInt(KEY_GOAL_WATER, defaults.water),
+                foodIntake = prefs.getInt(KEY_GOAL_FOOD, defaults.foodIntake),
             ),
         )
     }
@@ -74,5 +76,6 @@ class SharedPrefsSettingsRepository(
         const val KEY_GOAL_STEPS = "goal_steps"
         const val KEY_GOAL_CALORIES = "goal_calories"
         const val KEY_GOAL_WATER = "goal_water"
+        const val KEY_GOAL_FOOD = "goal_food_intake"
     }
 }

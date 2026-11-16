@@ -22,12 +22,14 @@ data class SettingsUiState(
     val stepsGoal: String = "",
     val caloriesGoal: String = "",
     val waterGoal: String = "",
+    val foodGoal: String = "",
     val nameError: String? = null,
     val heightError: String? = null,
     val weightError: String? = null,
     val stepsGoalError: String? = null,
     val caloriesGoalError: String? = null,
     val waterGoalError: String? = null,
+    val foodGoalError: String? = null,
     val isSaving: Boolean = false,
     /** Short message for a snackbar, cleared once it has been shown. */
     val message: String? = null,
@@ -59,6 +61,7 @@ class SettingsViewModel(
     fun onStepsGoalChange(input: String) = edit { it.copy(stepsGoal = digits(input), stepsGoalError = null) }
     fun onCaloriesGoalChange(input: String) = edit { it.copy(caloriesGoal = digits(input), caloriesGoalError = null) }
     fun onWaterGoalChange(input: String) = edit { it.copy(waterGoal = digits(input), waterGoalError = null) }
+    fun onFoodGoalChange(input: String) = edit { it.copy(foodGoal = digits(input), foodGoalError = null) }
 
     fun save() {
         val checked = _uiState.value.let {
@@ -69,12 +72,13 @@ class SettingsViewModel(
                 stepsGoalError = SettingsValidators.stepsGoal(it.stepsGoal),
                 caloriesGoalError = SettingsValidators.caloriesGoal(it.caloriesGoal),
                 waterGoalError = SettingsValidators.waterGoal(it.waterGoal),
+                foodGoalError = SettingsValidators.foodGoal(it.foodGoal),
             )
         }
         _uiState.value = checked
         val hasErrors = listOf(
             checked.nameError, checked.heightError, checked.weightError,
-            checked.stepsGoalError, checked.caloriesGoalError, checked.waterGoalError,
+            checked.stepsGoalError, checked.caloriesGoalError, checked.waterGoalError, checked.foodGoalError,
         ).any { it != null }
         if (hasErrors) return
 
@@ -86,6 +90,7 @@ class SettingsViewModel(
                 steps = checked.stepsGoal.toInt(),
                 calories = checked.caloriesGoal.toInt(),
                 water = checked.waterGoal.toInt(),
+                foodIntake = checked.foodGoal.toInt(),
             ),
         )
         _uiState.update { it.copy(isSaving = true) }
@@ -115,6 +120,7 @@ class SettingsViewModel(
         stepsGoal = settings.goals.steps.toString(),
         caloriesGoal = settings.goals.calories.toString(),
         waterGoal = settings.goals.water.toString(),
+        foodGoal = settings.goals.foodIntake.toString(),
     )
 
     private companion object {

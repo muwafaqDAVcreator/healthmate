@@ -7,6 +7,8 @@ data class Goals(
     val steps: Int = DailyGoals.STEPS,
     val calories: Int = DailyGoals.CALORIES,
     val water: Int = DailyGoals.WATER,
+    /** Calories to eat per day, for the food diary. */
+    val foodIntake: Int = DailyGoals.FOOD_INTAKE,
 )
 
 /**

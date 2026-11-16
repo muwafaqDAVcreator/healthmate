@@ -23,7 +23,6 @@ import androidx.compose.material.icons.rounded.Height
 import androidx.compose.material.icons.rounded.MonitorWeight
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -49,8 +48,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.healthmate.app.core.constants.FoodStyle
 import com.healthmate.app.core.constants.HealthMetric
 import com.healthmate.app.core.settings.UserSettings
+import com.healthmate.app.core.ui.AppCard
 import com.healthmate.app.core.ui.AppViewModelProvider
 import com.healthmate.app.core.utils.CalorieCalculator
 import com.healthmate.app.core.utils.formatted
@@ -211,6 +212,16 @@ private fun GoalsCard(state: SettingsUiState, viewModel: SettingsViewModel) {
             iconTint = HealthMetric.WATER,
             error = state.waterGoalError,
             tag = "settings_goal_water",
+        )
+        SettingsNumberField(
+            value = state.foodGoal,
+            onValueChange = viewModel::onFoodGoalChange,
+            label = "Food calories goal",
+            unit = "kcal",
+            icon = FoodStyle.icon,
+            iconColor = FoodStyle.color,
+            error = state.foodGoalError,
+            tag = "settings_goal_food",
             imeAction = ImeAction.Done,
         )
     }
@@ -273,7 +284,7 @@ private fun SectionCard(
     icon: ImageVector? = null,
     content: @Composable () -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth()) {
+    AppCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (icon != null) {
@@ -298,6 +309,7 @@ private fun SettingsNumberField(
     tag: String,
     modifier: Modifier = Modifier.fillMaxWidth(),
     iconTint: HealthMetric? = null,
+    iconColor: androidx.compose.ui.graphics.Color? = null,
     imeAction: ImeAction = ImeAction.Next,
 ) {
     OutlinedTextField(
@@ -305,7 +317,7 @@ private fun SettingsNumberField(
         onValueChange = onValueChange,
         label = { Text(label) },
         leadingIcon = {
-            Icon(icon, contentDescription = null, tint = iconTint?.color ?: MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(icon, contentDescription = null, tint = iconTint?.color ?: iconColor ?: MaterialTheme.colorScheme.onSurfaceVariant)
         },
         suffix = { Text(unit) },
         isError = error != null,

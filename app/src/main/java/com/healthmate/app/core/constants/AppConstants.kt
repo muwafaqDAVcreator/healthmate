@@ -8,6 +8,7 @@ object DailyGoals {
     const val STEPS = 10_000
     const val CALORIES = 500 // kcal burned through activity
     const val WATER = 2_500 // ml
+    const val FOOD_INTAKE = 2_000 // kcal eaten, a typical adult guide
 }
 
 /**
