@@ -6,13 +6,16 @@ in a local **SQLite** database.
 
 ## Features
 
-- **Dashboard** – today's steps, calories and water with progress toward daily goals
+- **Dashboard** – today's steps, calories burned and water as activity rings, a
+  7-day strip to look at other days, and a calorie balance (eaten vs burned)
 - **Add / edit records** – form with validation (numbers only, no future dates, limits)
 - **Records list** – newest first, filter by Today / Last 7 days / Last 30 days / custom dates
 - **Delete** – from the edit screen (with confirmation) or by swiping left (with Undo)
 - **Weekly chart** – last 7 days for any metric, with the daily goal line
 - **Streak badge** – how many days in a row you have logged something
 - **Settings** – your name, height, weight (with BMI) and your own daily goals
+- **Food diary (extra feature)** – log meals from a list of common foods
+  (including Sri Lankan dishes) or a custom food; calories are worked out from servings
 - **Calories from steps** – one tap on the form estimates calories burned from
   your steps, height and weight (formula below)
 - Light and dark theme that follows the phone setting
@@ -27,7 +30,7 @@ app/src/main/java/com/healthmate/app/
 ├── navigation/HealthMateApp.kt  # bottom navigation, Add button, NavHost
 ├── core/
 │   ├── constants/               # daily goals, input limits, metric colours/icons
-│   ├── database/                # HealthDatabaseHelper – SQLiteOpenHelper, table, dummy data
+│   ├── database/                # HealthDatabaseHelper – SQLiteOpenHelper, tables, dummy data
 │   ├── settings/                # UserSettings, Goals, SettingsRepository (SharedPreferences)
 │   ├── theme/                   # Material 3 light/dark theme
 │   ├── ui/                      # view model factory, error banner, date rules
@@ -38,7 +41,8 @@ app/src/main/java/com/healthmate/app/
     │   ├── form/                # RecordFormViewModel + add/edit screen
     │   ├── RecordsViewModel.kt  # list state, filters, delete/undo
     │   └── RecordListScreen.kt
-    ├── dashboard/               # DashboardViewModel, screen, SummaryCard, WeeklyChart
+    ├── dashboard/               # DashboardViewModel, screen, ActivityRings, WeeklyChart
+    ├── food/                    # food diary: data (table, catalogue), view models, screens
     └── settings/                # SettingsViewModel + profile/goals screen
 ```
 
@@ -63,6 +67,20 @@ Table `health_records`
 | calories | INTEGER | kcal burned                    |
 | water    | INTEGER | ml drunk                       |
 
+Table `food_entries` (extra feature, added in database version 2)
+
+| Column   | Type    | Notes                                   |
+|----------|---------|-----------------------------------------|
+| id       | INTEGER | Primary key, auto increment             |
+| date     | TEXT    | `yyyy-MM-dd`, indexed                   |
+| meal     | TEXT    | BREAKFAST, LUNCH, DINNER or SNACK        |
+| name     | TEXT    | food name                               |
+| servings | REAL    | e.g. 1.5                                |
+| calories | INTEGER | total kcal (per serving × servings)     |
+
+Updating from version 1 runs `onUpgrade`, which only creates `food_entries`,
+so existing health records are kept.
+
 Settings (name, height, weight, goals) are small key-value data, so they are
 kept in **SharedPreferences**, separate from the health records in SQLite.
 The `health_records` table is unchanged.
@@ -77,6 +95,16 @@ The `health_records` table is unchanged.
 
 Example: 175 cm, 70 kg, 7,850 steps → stride 0.72 m → 5.7 km → **199 kcal**.
 It is an estimate; the user can still type their own value.
+
+## Calories in food
+
+Each food in the built-in list has an approximate **kcal per serving**
+(e.g. white rice, 1 cup cooked ≈ 240 kcal).
+
+**Calories eaten = kcal per serving × servings** → 1.5 cups of rice = 1.5 × 240 = 360 kcal.
+
+For anything not in the list, "Custom food" lets the user type the calories
+from the packet label.
 
 ## Libraries
 
@@ -98,6 +126,6 @@ Open the folder in Android Studio and press Run, or from a terminal:
 
 ```bash
 ./gradlew installDebug        # install on a running emulator or phone
-./gradlew testDebugUnitTest   # 52 unit, database and UI tests
+./gradlew testDebugUnitTest   # 66 unit, database and UI tests
 ./gradlew assembleRelease     # APK in app/build/outputs/apk/release/
 ```
